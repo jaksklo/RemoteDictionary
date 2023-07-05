@@ -1,0 +1,51 @@
+version: "2.0"
+
+networks:
+  aio-net:
+    driver: bridge
+
+services:
+  rabbitmq:
+    image: 'bitnami/rabbitmq:latest'
+    container_name: rabbit
+    environment:
+      - RABBITMQ_USERNAME=user
+      - RABBITMQ_PASSWORD=password123
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - aio-net
+  app_server:
+    build:
+      context: .
+      dockerfile: server.dockerfile
+    volumes:
+      - type: bind
+        source: ./configuration
+        target: /configuration
+      - type: bind
+        source: ./data
+        target: /data
+    depends_on:
+      - rabbitmq
+    networks:
+      - aio-net
+  app_client:
+    build:
+      context: .
+      dockerfile: client.dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - type: bind
+        source: ./configuration
+        target: /configuration
+    depends_on:
+      - rabbitmq
+      - app_server
+    networks:
+      - aio-net
+
+
+
